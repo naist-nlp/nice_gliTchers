@@ -1,0 +1,9 @@
+[project]
+name = "nlp2025-eval-sharedtask-gec"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11.0"
+dependencies = [
+    "gec-datasets>=0.1.0",
+]
