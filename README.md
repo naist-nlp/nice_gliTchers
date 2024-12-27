@@ -10,6 +10,46 @@ pip install git+https://github.com/gotutiyan/gec-metrics
 python -m spacy download en_core_web_sm
 ```
 
+# Example of the implementation (just example)
+
+- Make `experiments/your_custom_corrector.py`
+- Implement your method by inheriting from the `CorrectorBase` class.
+
+This is an example of a Corrector with no editing.
+
+```python
+from .base import CorrectorBase
+
+class CorrectorKeepAll(CorrectorBase):
+    def correct(self, sources: list[str]):
+        # You have to override correct() method for unified interface.
+        return sources
+```
+
+Then, 
+
+```python
+from experiments import Scorer
+from experiments.your_custom_corrector import CorrectorKeepAll
+import pprint
+
+scorer = Scorer(Scorer.Config(metrics=['errant', 'gleuofficial', 'impara']))
+corrector_cls = CorrectorKeepAll
+corrector = corrector_cls(corrector_cls.Config())
+results = scorer.run(corrector)
+pprint.pprint(results)
+'''Output
+{'errant': 0.0,
+ 'gleuofficial': 0.6390342575052511,
+ 'impara': 0.5629974678184385}
+'''
+```
+
+You can freely implement `Corrector*` class and easily run the experiments like the above example.
+
+Of course this is just example.
+
+
 # Implemenation Tips
 
 ### Dataset
@@ -77,3 +117,5 @@ for name in ['errant', 'gleuofficial', 'impara']:
         )
     print(name, score)
 ```
+
+This way is implemented in `experiments.Score` class.
