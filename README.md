@@ -33,7 +33,7 @@ from experiments import Scorer
 from experiments.your_custom_corrector import CorrectorKeepAll
 import pprint
 
-scorer = Scorer(Scorer.Config(metrics=['errant', 'gleuofficial', 'impara']))
+scorer = Scorer(Scorer.Config(metrics=['errant', 'gleuofficial', 'impara', 'pterrant']))
 corrector_cls = CorrectorKeepAll
 corrector = corrector_cls(corrector_cls.Config())
 results = scorer.run(corrector)
@@ -82,9 +82,13 @@ gleu = gleu_cls(gleu_cls.Config())
 # IMPARA
 impara_cls = get_metric('impara')
 impara = impara_cls(impara_cls.Config())
+
+# PTERRANT
+pterrant_cls = get_metric('pterrant')
+pterrant = pterrant_cls(pterrant_cls.Config())
 ```
 
-(I will implement PT-ERRANT and GPT-4-based metric ...)
+(LLM-based metric is not implemented yet.)
 
 ### Evaluate
 
