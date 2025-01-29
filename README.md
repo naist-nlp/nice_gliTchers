@@ -10,32 +10,37 @@ pip install git+https://github.com/gotutiyan/gec-metrics
 python -m spacy download en_core_web_sm
 ```
 
-# Example of the implementation (just example)
+# Tutorial
 
-- Make `experiments/your_custom_corrector.py`
-- Implement your method by inheriting from the `CorrectorBase` class.
+### Define your Corrector
 
-This is an example of a Corrector with no editing.
+`cd experiments/` and create a Python file. Implement your Corrector by inheriting from `CorrectorBase`.
+
+This is a sentence-level processing.
 
 ```python
 from .base import CorrectorBase
 
-class CorrectorKeepAll(CorrectorBase):
-    def correct(self, sources: list[str]):
-        # You have to override correct() method for unified interface.
-        return sources
+class CorrectorYours(CorrectorBase):
+    def correct(self, src: str):
+        hyp = src
+        return hyp
 ```
 
-Then, 
+### experiments.Scorer
+
+This class performs end-to-end evaluation. Basically, all you need is this class.
 
 ```python
 from experiments import Scorer
-from experiments.your_custom_corrector import CorrectorKeepAll
+from experiments.your_custom_corrector import CorrectorKeepAll  # Or CorrectorYours
 import pprint
 
-scorer = Scorer(Scorer.Config(metrics=['errant', 'gleuofficial', 'impara', 'pterrant']))
-corrector_cls = CorrectorKeepAll
-corrector = corrector_cls(corrector_cls.Config())
+scorer = Scorer(Scorer.Config(
+    metrics=['errant', 'gleuofficial', 'impara', 'pterrant']
+))
+corrector_cls = CorrectorKeepAll  # The corrector to be evaluated
+corrector = corrector_cls()
 results = scorer.run(corrector)
 pprint.pprint(results)
 '''Output
@@ -46,25 +51,59 @@ pprint.pprint(results)
 '''
 ```
 
-You can freely implement `Corrector*` class and easily run the experiments like the above example.
+If you want to look more detailed, you can see the following document.
 
-Of course this is just example.
-
-
-# Implemenation Tips
-
-### Dataset
+### Loading Dataset
 
 The target dataset is BEA 2019 development set. You can use this data as follows:
 ```python
 from gec_datasets import GECDatasets
-gec = GECDatasets(base_path='datasets/')  # Any path is ok
+gec = GECDatasets(base_path='datasets/')  # Dataset are stored to the base_path.
 bea19_dev = gec.load('bea19-dev')
 assert len(bea19_dev.srcs) == 4384
 assert len(bea19_dev.refs[0]) == 4384
 ```
 
+### Corrector
+
+The Corrector classes are designed for sentence-level processing.
+
+All classes have the same interface: `.correct()`.
+
+```python
+from experiments import Scorer, CorrectorKeepAll
+from gec_datasets import GECDatasets
+gec = GECDatasets(base_path='datasets/')  # Dataset are stored to the base_path.
+bea19_dev = gec.load('bea19-dev')
+corrector = CorrectorKeepAll()
+hyps = [corrector.correct(s) for s in bea19_dev.srcs[:10]]
+print(hyps)
+```
+
 ### Metrics
+
+Metrics have the same interface: `.score_sentence()` and `score_corpus()`.
+
+```python
+from experiments import Scorer, CorrectorKeepAll
+from gec_datasets import GECDatasets
+from gec_metrics import get_metric
+# Load dataset
+gec = GECDatasets(base_path='datasets/')  # Dataset are stored to the base_path.
+bea19_dev = gec.load('bea19-dev')
+# Build corrector
+corrector = CorrectorKeepAll()
+hyps = [corrector.correct(s) for s in bea19_dev.srcs]
+# Evaluate the corrector
+errant_cls = get_metric('errant')
+metric = errant_cls(errant_cls.Config())
+score = metric.score_corpus(
+    sources=bea19_dev.srcs,
+    hypotheses=hyps,
+    references=bea19_dev.refs  # reference based metrics require references
+)
+print(score)  # output: 0.0
+```
 
 The targeted metrics are ERRANT, GLEU, PT-ERRANT, IMPARA, and GPT-4-based one.
 
@@ -73,54 +112,13 @@ The gec-metrics library supports some of them:
 from gec_metrics import get_metric
 
 # ERRANT
-errant_cls = get_metric('errant')
-errant = errant_cls(errant_cls.Config())
-
+metric_cls = get_metric('errant')
 # GLEU
-gleu_cls = get_metric('gleuofficial')
-gleu = gleu_cls(gleu_cls.Config())
-
+metric_cls = get_metric('gleuofficial')
 # IMPARA
-impara_cls = get_metric('impara')
-impara = impara_cls(impara_cls.Config())
-
+metric_cls = get_metric('impara')
 # PTERRANT
-pterrant_cls = get_metric('pterrant')
-pterrant = pterrant_cls(pterrant_cls.Config())
+metric_cls = get_metric('pterrant')
 ```
 
 (LLM-based metric is not implemented yet.)
-
-### Evaluate
-
-Given "hacked" corrected sentences, you can perform evaluation as follows:
-
-```python
-from gec_datasets import GECDatasets
-from gec_metrcis import get_metric
-from gec_metrics.metrics import (
-    MetricBaseForReferenceBased,
-    MetricBaseForReferenceFree,
-)
-gec = GECDatasets(base_path='datasets/')
-bea19_dev = gec.load('bea19-dev')
-hacked_corrections = []
-
-for name in ['errant', 'gleuofficial', 'impara']:
-    metric_cls = get_metric(name)
-    metric = metric_cls(metric_cls.Config())
-    if isinstance(metric, MetricBaseForReferenceBased):
-        score = metric.score_corpus(
-            sources=bea19_dev.srcs,
-            hypotheses=hacked_corrections,
-            references=bea19_dev.refs
-        )
-    elif isinstance(metric, MetricBaseForReferenceFree):
-        score = metric.score_corpus(
-            sources=bea19_dev.srcs,
-            hypotheses=hacked_corrections,
-        )
-    print(name, score)
-```
-
-This way is implemented in `experiments.Score` class.

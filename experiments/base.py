@@ -11,8 +11,8 @@ class CorrectorBase(abc.ABC):
     @dataclass
     class Config: ...
 
-    def __init__(self, config) -> None:
-        self.config = config
+    def __init__(self, config=None) -> None:
+        self.config = config if config is not None else self.Config()
     
     @abc.abstractmethod
     def correct(self, source: str) -> str:
