@@ -9,5 +9,5 @@ class CorrectorrAddPrefix(CorrectorBase):
     class Config(CorrectorBase.Config):
         prefix: str = 'teacher: '
     
-    def correct(self, source):
-        return self.config.prefix + source
+    def correct(self, sources: list[str]) -> list[str]:
+        return [self.config.prefix + s for s in sources]

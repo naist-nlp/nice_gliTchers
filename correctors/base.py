@@ -15,7 +15,7 @@ class CorrectorBase(abc.ABC):
         self.config = config if config is not None else self.Config()
     
     @abc.abstractmethod
-    def correct(self, source: str) -> str:
+    def correct(self, sources: list[str]) -> list[str]:
         '''Correct source sentences.
 
         Args:
@@ -47,7 +47,7 @@ class Scorer:
 
     def run(self, corrector: CorrectorBase):
         results = dict()
-        hypotheses = [corrector.correct(s) for s in self.bea19_dev.srcs]
+        hypotheses = corrector.correct(self.bea19_dev.srcs)
         for name, metric in self.metric.items():
             if isinstance(metric, MetricBaseForReferenceBased):
                 score = metric.score_corpus(

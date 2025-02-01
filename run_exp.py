@@ -1,14 +1,14 @@
-from experiments import Scorer
+from correctors import Scorer
 # from experiments import (
 #     CorrectorKeepAll,
 #     CorrectorDeleteAll
 # )
 import pprint
-from experiments.your_custom_corrector import CorrectorKeepAll
+from correctors.your_custom_corrector import CorrectorYours
 
 scorer = Scorer(Scorer.Config(metrics=['errant', 'gleuofficial', 'impara', 'pterrant']))
-corrector_cls = CorrectorKeepAll
-corrector = corrector_cls(corrector_cls.Config())
+corrector_cls = CorrectorYours
+corrector = corrector_cls()
 results = scorer.run(corrector)
 pprint.pprint(results)
 '''Output

@@ -32,14 +32,14 @@ class CorrectorYours(CorrectorBase):
 This class performs end-to-end evaluation. Basically, all you need is this class.
 
 ```python
-from experiments import Scorer
-from experiments.your_custom_corrector import CorrectorKeepAll  # Or CorrectorYours
+from correctors import Scorer
+from correctors.your_custom_corrector import CorrectorYours
 import pprint
 
 scorer = Scorer(Scorer.Config(
     metrics=['errant', 'gleuofficial', 'impara', 'pterrant']
 ))
-corrector_cls = CorrectorKeepAll  # The corrector to be evaluated
+corrector_cls = CorrectorYours  # The corrector to be evaluated
 corrector = corrector_cls()
 results = scorer.run(corrector)
 pprint.pprint(results)
@@ -51,9 +51,9 @@ pprint.pprint(results)
 '''
 ```
 
-If you want to look more detailed, you can see the following document.
+If you want to look more details, you can see the following document.
 
-### Loading Dataset
+### Dataset
 
 The target dataset is BEA 2019 development set. You can use this data as follows:
 ```python
@@ -71,7 +71,7 @@ The Corrector classes are designed for sentence-level processing.
 All classes have the same interface: `.correct()`.
 
 ```python
-from experiments import Scorer, CorrectorKeepAll
+from correctors import Scorer, CorrectorKeepAll
 from gec_datasets import GECDatasets
 gec = GECDatasets(base_path='datasets/')  # Dataset are stored to the base_path.
 bea19_dev = gec.load('bea19-dev')
@@ -85,7 +85,7 @@ print(hyps)
 Metrics have the same interface: `.score_sentence()` and `score_corpus()`.
 
 ```python
-from experiments import Scorer, CorrectorKeepAll
+from correctors import Scorer, CorrectorKeepAll
 from gec_datasets import GECDatasets
 from gec_metrics import get_metric
 # Load dataset
@@ -95,14 +95,14 @@ bea19_dev = gec.load('bea19-dev')
 corrector = CorrectorKeepAll()
 hyps = [corrector.correct(s) for s in bea19_dev.srcs]
 # Evaluate the corrector
-errant_cls = get_metric('errant')
+errant_cls = get_metric('gleuofficial')
 metric = errant_cls(errant_cls.Config())
 score = metric.score_corpus(
     sources=bea19_dev.srcs,
     hypotheses=hyps,
     references=bea19_dev.refs  # reference based metrics require references
 )
-print(score)  # output: 0.0
+print(score)  # output: 0.6390342575052511
 ```
 
 The targeted metrics are ERRANT, GLEU, PT-ERRANT, IMPARA, and GPT-4-based one.

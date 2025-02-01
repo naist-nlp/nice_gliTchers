@@ -9,5 +9,5 @@ class CorrectorStaticResponse(CorrectorBase):
     class Config(CorrectorBase.Config):
         response: str = 'Hello'
     
-    def correct(self, source: str) -> str:
-        return self.config.response
+    def correct(self, sources: list[str]) -> list[str]:
+        return [self.config.response for _ in sources]
