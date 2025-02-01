@@ -16,15 +16,13 @@ python -m spacy download en_core_web_sm
 
 `cd experiments/` and create a Python file. Implement your Corrector by inheriting from `CorrectorBase`.
 
-This is a sentence-level processing.
-
 ```python
 from .base import CorrectorBase
 
 class CorrectorYours(CorrectorBase):
-    def correct(self, src: str):
-        hyp = src
-        return hyp
+    def correct(self, sources: list[str]) -> list[str]:
+        hypotheses = sources
+        return hypotheses
 ```
 
 ### experiments.Scorer
