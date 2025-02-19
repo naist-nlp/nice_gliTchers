@@ -2,11 +2,15 @@
 A tools for the shared task regarding hacking Grammatical Error Correction metrics.
 
 # Minimal Installation
+```sh
+pip install git+https://github.com/naist-nlp/nice_gliTchers
+python -m spacy download en_core_web_sm
 ```
-git clone https://github.com/naist-nlp/nlp2025-eval-sharedtask-gec
-cd nlp2025-eval-sharedtask-gec
+Or
+```
+git clone https://github.com/naist-nlp/nice_gliTchers
+cd nice_gliTchers
 pip install -e ./
-pip install git+https://github.com/gotutiyan/gec-metrics
 python -m spacy download en_core_web_sm
 ```
 
@@ -103,9 +107,7 @@ score = metric.score_corpus(
 print(score)  # output: 0.6390342575052511
 ```
 
-The targeted metrics are ERRANT, GLEU, PT-ERRANT, IMPARA, and GPT-4-based one.
-
-The gec-metrics library supports some of them:
+[gec-metrics](https://github.com/gotutiyan/gec-metrics) covers ERRANT, GLEU, PT-ERRANT, and IMPARA.
 ```python
 from gec_metrics import get_metric
 
@@ -117,6 +119,22 @@ metric_cls = get_metric('gleuofficial')
 metric_cls = get_metric('impara')
 # PTERRANT
 metric_cls = get_metric('pterrant')
+
+metric = metric_cls()  # when use the default config.
+metric = metric_cls(metric_cls.Config())  # otherwise input the Config.
 ```
 
-(LLM-based metric is not implemented yet.)
+The LLM-based metric is avalilable as `nice_glitchers.metrics.LLMSent`.  
+This only supports OpenAI models for now, and does not support HuggingFace models.
+```python
+from nice_glitchers.metrics import LLMSent
+metric = LLMSent(LLMSent.Config(
+    organization=os.environ['OPENAI_ORGANIZATION_KEY'],
+    project=os.environ['OPENAI_API_KEY'],
+))
+scores = metric.score_sentence(
+    sources=['This sentnce contain grammatical error .'],
+    hypotheses=['This sentence contains a grammatical error .'],
+)
+print(scores)
+```
