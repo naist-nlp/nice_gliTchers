@@ -5,13 +5,13 @@ import subprocess
 class CorrectionLoader():
     @dataclass
     class Config:
-        base_path: str = 'datasets/'
+        base_dir: str = 'datasets/bea19-dev-correction/'
     
     def __init__(self, config: Config = None):
         self.config = config if config is not None else self.Config()
 
     def load(self, model_id: str):
-        hyp_dir = Path(self.config.base_path) / "bea19-dev-correction/"
+        hyp_dir = Path(self.config.base_dir)
         hyp_file = hyp_dir / (model_id + ".txt")
         if not hyp_file.exists():
             valid_ids = [f.name.replace('.txt', '') for f in hyp_dir.iterdir()]

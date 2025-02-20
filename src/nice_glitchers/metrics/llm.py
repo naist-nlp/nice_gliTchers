@@ -15,7 +15,7 @@ class LLMSent(MetricBaseForReferenceFree):
         model: str = 'gpt-4o-mini'
         organization: str = None
         project: str = None
-        cache: str = 'openai.cache'
+        cache: str = None
         seed: int = 777
         verbose: bool = True
         instruction_template: str = '''The goal of this task is to rank the presented targets based on the quality of the sentences.
@@ -44,6 +44,8 @@ The output should be a markdown code snippet formatted in the following schema, 
             organization=self.config.organization,
             project=self.config.project,
         )
+        if self.config.cache is None:
+            self.config.cache = self.config.model + '.cache'
         if os.path.exists(self.config.cache):                                                          
             self.cache = self.load_json(self.config.cache)
         else:

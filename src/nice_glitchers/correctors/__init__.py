@@ -1,4 +1,4 @@
-from .base import Scorer, CorrectorBase
+from .base import CorrectorBase
 from .add_prefix import CorrectorrAddPrefix
 from .all_edit_patterns import CorrectorAllEditPatterns
 from .delete_all import CorrectorDeleteAll

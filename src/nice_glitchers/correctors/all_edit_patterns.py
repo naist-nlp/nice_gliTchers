@@ -20,26 +20,27 @@ class CorrectorAllEditPatterns(CorrectorBase):
         '''
         max_edits: int = 10
         metric: str = 'impara'
-        model: str = 'gec-t5-large-clang8'
-        base_path: str = 'datasets/'
+        model: str = 'ens-esc-pillars7'
+        base_dir: str = 'datasets/bea19-dev-correction/'
     
     def __init__(self, config: Config = None):
         super().__init__(config)
         self.metric_cls = get_metric(self.config.metric)
         self.metric = self.metric_cls(self.metric_cls.Config())
         self.errant = CachedERRANT()
-        self.seeda_loader = CorrectionLoader(CorrectionLoader.Config(
-            base_path=self.config.base_path
+        self.gec_loader = CorrectionLoader(CorrectionLoader.Config(
+            base_dir=self.config.base_dir
         ))
 
     def find_best_edit_pattern(self, src, hyp):
         edits = self.errant.extract_edits(src, hyp)
         num_edits = len(edits)
+        # Due to the time complexity of 2^N, we ignore if many edits
         if num_edits >= self.config.max_edits:
             return hyp
         all_pattern_hyps = []
         for edit_set in range(2**num_edits):
-            # If i-th bit of edit_set is 1, we use i-th edit
+            # If i-th bit of `edit_set` is 1, we use i-th edit
             this_edits = [edits[edit_id] for edit_id in range(num_edits)\
                           if (edit_set >> edit_id) & 1]
             this_hyp = apply_edits(src, this_edits)
@@ -50,6 +51,8 @@ class CorrectorAllEditPatterns(CorrectorBase):
             sources=srcs,
             hypotheses=all_pattern_hyps
         )
+        print(scores)
+        print()
         # Sort hypotheses by scores
         best_hyp = sorted(
             list(zip(all_pattern_hyps, scores)),
@@ -58,7 +61,7 @@ class CorrectorAllEditPatterns(CorrectorBase):
         return best_hyp
     
     def correct(self, sources: list[str]) -> list[str]:
-        hypotheses = self.seeda_loader.load(self.config.model)
+        hypotheses = self.gec_loader.load(self.config.model)
         new_hypotheses = [
             self.find_best_edit_pattern(s, h) for s, h in zip(sources, hypotheses)
         ]
