@@ -12,7 +12,7 @@ class LLMSent(MetricBaseForReferenceFree):
     '''
     @dataclass
     class Config(MetricBaseForReferenceFree.Config):
-        model: str = 'gpt-4o-mini'
+        model: str = 'gpt-4o-mini-2024-07-18'
         organization: str = None
         project: str = None
         cache: str = None

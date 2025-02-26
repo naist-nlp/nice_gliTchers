@@ -16,9 +16,9 @@ python -m spacy download en_core_web_sm
 
 # Tutorial
 
-### Define your Corrector based on nice_glitchers.correctors.CorrectorBase
+### Define your Corrector
 
-`cd experiments/` and create a Python file. Implement your Corrector by inheriting from `CorrectorBase`.
+If the corrector makes correction, use `nice_glitchers.correctors.CorrectorBase`.
 
 ```python
 from nice_glitchers.correctors import CorrectorBase
@@ -29,19 +29,48 @@ class CorrectorYours(CorrectorBase):
         return hypotheses
 ```
 
-### Evaluate performance via nice_glitchers.Scorer
-
-This class performs end-to-end evaluation. Basically, all you need is this class.
+If the corrector aims to (unreasonably) improve existing corrections, use `nice_glitchers.postprocessors.PostProcessorBase`.
 
 ```python
-from nice_glitchers import Scorer
-from nice_glitchers.correctors.your_custom_corrector import CorrectorYours
-import pprint
+from nice_glitchers.postprocessors import PostProcessorBase
 
+class PostProcessorYours(PostProcessorBase):
+    def correct(self, sources: list[str], hypotheses: list[str]) -> list[str]:
+        return hypotheses
+```
+
+### Evaluate the corrector/post_processor performance.
+
+We provide end-to-end evaluation scripts in `experiments/`.
+
+```
+cd experiments/
+```
+
+Then, you can use `scorer.Scorer` for the evaluation.
+
+For API:
+```python
+from scorer import Scorer
+from nice_glitchers import get_corrector
+from nice_glitchers.metrics import LLMSent
+import pprint
+from gec_metrics import get_metric
+
+metric_ids = ['errant', 'gleu', 'impara', 'pterrant']
+# Load metrics that are available from gec-metrics.
+metrics = [get_metric(i)() for i in metric_ids]
+# If you also use the LLM-based metric:
+# metrics.append(
+#     LLMSent(LLMSent.Config(
+#         organization=os.environ['OPENAI_ORGANIZATION_KEY'],
+#         project=os.environ['OPENAI_API_KEY'],
+#     ))
+# )
 scorer = Scorer(Scorer.Config(
-    metrics=['errant', 'gleu', 'impara', 'pterrant']
+    metrics=metrics
 ))
-corrector_cls = CorrectorYours  # The corrector to be evaluated
+corrector_cls = get_corrector('keepall')  # The corrector to be evaluated
 corrector = corrector_cls()
 results = scorer.run(corrector)
 pprint.pprint(results)
@@ -53,7 +82,24 @@ pprint.pprint(results)
 '''
 ```
 
-If you want to look more details, you can see the following document.
+For CLI:
+```sh
+python run_exp.py \
+    --metrics errant gleu pterrant impara \
+    --type corrector \
+    --method keepall
+```
+
+|Arguments|Description|
+|:--|:--|
+|--metrics|Which metrics are used. You can make multiple choices from `errant pterrant gleu impara llm`. |
+|--type|`corrector` or `postprocessors`.|
+|--method|The method id for the --type. You can see the available ids via `nice_glitchers.get_corrector_ids()` and `nice_glitchers.get_postprocessor_ids()`|
+
+
+This is the end of the tutorial.
+
+# Components of Scorer class
 
 ### Loading datasets via gec_datasets.GECDatasets
 
@@ -64,23 +110,6 @@ gec = GECDatasets(base_path='exp-datasets/')  # Dataset are stored to the base_p
 bea19_dev = gec.load('bea19-dev')
 assert len(bea19_dev.srcs) == 4384
 assert len(bea19_dev.refs[0]) == 4384
-```
-
-### Corrector
-
-The Corrector classes are designed for sentence-level processing.
-
-All classes have the same interface: `.correct()`.
-
-```python
-from nice_glitchers import Scorer
-from nice_glitchers.correctors import CorrectorKeepAll
-from gec_datasets import GECDatasets
-gec = GECDatasets(base_path='exp-datasets/')  # Dataset are stored to the base_path.
-bea19_dev = gec.load('bea19-dev')
-corrector = CorrectorKeepAll()
-hyps = [corrector.correct(s) for s in bea19_dev.srcs[:10]]
-print(hyps)
 ```
 
 ### Metrics
@@ -98,7 +127,7 @@ bea19_dev = gec.load('bea19-dev')
 # Build corrector
 corrector = CorrectorKeepAll()
 hyps = [corrector.correct(s) for s in bea19_dev.srcs]
-# Evaluate the corrector
+# Evaluate the corrector by GLEU
 errant_cls = get_metric('gleu')
 metric = errant_cls(errant_cls.Config())
 score = metric.score_corpus(
@@ -127,7 +156,7 @@ metric = metric_cls(metric_cls.Config())  # otherwise input the Config.
 ```
 
 The LLM-based metric is avalilable as `nice_glitchers.metrics.LLMSent`.  
-This only supports OpenAI models for now, and does not support HuggingFace models.
+This only supports OpenAI models for now.
 ```python
 from nice_glitchers.metrics import LLMSent
 import os

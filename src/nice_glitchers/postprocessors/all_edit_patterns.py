@@ -1,16 +1,15 @@
-from .base import CorrectorBase
+from .base import PostProcessorBase
 from gecommon import CachedERRANT
 from gecommon.utils import apply_edits
 from dataclasses import dataclass
 from gec_metrics import get_metric
-from .utils import CorrectionLoader
 
-class CorrectorAllEditPatterns(CorrectorBase):
+class PostProcessorAllEditPatterns(PostProcessorBase):
     '''It tries 2^N patterns applied to all edits 
         and select the set of edits with the highest evaluation value.
     '''
     @dataclass
-    class Config(CorrectorBase.Config):
+    class Config(PostProcessorBase.Config):
         '''
             - max_edits (int): Ignore a hypothesis that contains more than max_edits edits.
                 This is due to a computation cost problem.
@@ -20,17 +19,12 @@ class CorrectorAllEditPatterns(CorrectorBase):
         '''
         max_edits: int = 10
         metric: str = 'impara'
-        model: str = 'ens-esc-pillars7'
-        base_dir: str = 'datasets/bea19-dev-correction/'
     
     def __init__(self, config: Config = None):
         super().__init__(config)
         self.metric_cls = get_metric(self.config.metric)
         self.metric = self.metric_cls(self.metric_cls.Config())
         self.errant = CachedERRANT()
-        self.gec_loader = CorrectionLoader(CorrectionLoader.Config(
-            base_dir=self.config.base_dir
-        ))
 
     def find_best_edit_pattern(self, src, hyp):
         edits = self.errant.extract_edits(src, hyp)
@@ -51,17 +45,18 @@ class CorrectorAllEditPatterns(CorrectorBase):
             sources=srcs,
             hypotheses=all_pattern_hyps
         )
-        print(scores)
-        print()
-        # Sort hypotheses by scores
+        # Choose the hyp with the highest score
         best_hyp = sorted(
             list(zip(all_pattern_hyps, scores)),
             key=lambda x: x[1],
         )[-1][0]
         return best_hyp
     
-    def correct(self, sources: list[str]) -> list[str]:
-        hypotheses = self.gec_loader.load(self.config.model)
+    def correct(
+        self,
+        sources: list[str],
+        hypotheses: list[str]
+    ) -> list[str]:
         new_hypotheses = [
             self.find_best_edit_pattern(s, h) for s, h in zip(sources, hypotheses)
         ]
