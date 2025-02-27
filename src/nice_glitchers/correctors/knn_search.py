@@ -15,7 +15,7 @@ class CorrectorKnnSearch(CorrectorBase):
     @dataclass
     class Config(CorrectorBase.Config):
         data_ids: list[str] = field(
-            default_factory=lambda: ['lang8-train', 'troy-1bw', 'troy-blogs']
+            default_factory=lambda: ['lang8-train', 'troy-1bw-train', 'troy-blogs-train']
         )
         index_dir: str = 'exp-datasets/index'
         k: int = 1024

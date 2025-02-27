@@ -9,7 +9,7 @@ class PostProcessorKnnSearch(PostProcessorBase):
     def __init__(self, config=None) -> None:
         super().__init__(config)
         self.knn_corrector = CorrectorKnnSearch(CorrectorKnnSearch.Config(
-            data_ids=['lang8-train', 'troy-1bw', 'troy-blogs'],
+            data_ids=['lang8-train', 'troy-1bw-train', 'troy-blogs-train'],
             index_dir='exp-datasets/index',
             k=1024
         ))

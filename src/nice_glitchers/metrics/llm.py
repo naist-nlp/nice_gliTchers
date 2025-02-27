@@ -14,10 +14,10 @@ class LLMSent(MetricBaseForReferenceFree):
     class Config(MetricBaseForReferenceFree.Config):
         model: str = 'gpt-4o-mini-2024-07-18'
         organization: str = None
-        project: str = None
+        api_key: str = None
         cache: str = None
         seed: int = 777
-        verbose: bool = True
+        verbose: bool = False
         instruction_template: str = '''The goal of this task is to rank the presented targets based on the quality of the sentences.
 After reading the source, please assign a score from a minimum of 1 point to a maximum of 5 points to the target based on the quality of the sentence.
 
@@ -42,7 +42,7 @@ The output should be a markdown code snippet formatted in the following schema, 
         super().__init__(config)
         self.client = OpenAI(
             organization=self.config.organization,
-            project=self.config.project,
+            api_key=self.config.api_key,
         )
         if self.config.cache is None:
             self.config.cache = self.config.model + '.cache'
