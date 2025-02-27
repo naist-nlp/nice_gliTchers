@@ -22,7 +22,7 @@ def main(args):
         metrics.append(
             LLMSent(LLMSent.Config(
                 organization=os.environ['OPENAI_ORGANIZATION_KEY'],
-                project=os.environ['OPENAI_API_KEY'],
+                api_key=os.environ['OPENAI_API_KEY'],
             ))
         )
     scorer = Scorer(Scorer.Config(metrics=metrics))
