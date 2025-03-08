@@ -1,6 +1,6 @@
 # nlp2025-eval-sharedtask-gec
 NLP2025 WS「LLM時代のことばの評価の現在と未来」文法誤り訂正部門に対するチーム「Nice gliTchers」のコード．
-- 予稿：/
+- [予稿](./materials/nlp2025-ws-nice-glitchers.pdf)
 
 # Minimal Installation
 ```sh
