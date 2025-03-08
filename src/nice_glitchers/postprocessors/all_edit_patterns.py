@@ -3,6 +3,8 @@ from gecommon import CachedERRANT
 from gecommon.utils import apply_edits
 from dataclasses import dataclass
 from gec_metrics import get_metric
+import json
+from tqdm import tqdm
 
 class PostProcessorAllEditPatterns(PostProcessorBase):
     '''It tries 2^N patterns applied to all edits 
@@ -25,6 +27,12 @@ class PostProcessorAllEditPatterns(PostProcessorBase):
         self.metric_cls = get_metric(self.config.metric)
         self.metric = self.metric_cls(self.metric_cls.Config())
         self.errant = CachedERRANT()
+        self.save_data = []
+
+    def save(self, path):
+        with open(path, 'w') as f:
+            json.dump(self.save_data, f, indent=2)
+            
 
     def find_best_edit_pattern(self, src, hyp):
         edits = self.errant.extract_edits(src, hyp)
@@ -50,6 +58,20 @@ class PostProcessorAllEditPatterns(PostProcessorBase):
             list(zip(all_pattern_hyps, scores)),
             key=lambda x: x[1],
         )[-1][0]
+        save_data = {
+            'src': src,
+            'hyp': hyp,
+            'best_hyp': best_hyp,
+            'index': all_pattern_hyps.index(best_hyp),
+            'index-bin': bin(all_pattern_hyps.index(best_hyp)),
+            'edits': [str(e) for e in edits],
+            'selected_edits': [str(edits[edit_id]) for edit_id in range(num_edits)\
+                              if (all_pattern_hyps.index(best_hyp) >> edit_id) & 1],
+            'src-score': scores[0],
+            'hyp-score': scores[-1],
+            'max-score': scores[all_pattern_hyps.index(best_hyp)]
+        }
+        self.save_data.append(save_data)
         return best_hyp
     
     def correct(
@@ -58,6 +80,6 @@ class PostProcessorAllEditPatterns(PostProcessorBase):
         hypotheses: list[str]
     ) -> list[str]:
         new_hypotheses = [
-            self.find_best_edit_pattern(s, h) for s, h in zip(sources, hypotheses)
+            self.find_best_edit_pattern(s, h) for s, h in tqdm(zip(sources, hypotheses))
         ]
         return new_hypotheses

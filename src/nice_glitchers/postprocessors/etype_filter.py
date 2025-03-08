@@ -1,12 +1,18 @@
 from .base import PostProcessorBase
 from gecommon import CachedERRANT
 from gecommon.utils import apply_edits
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from gec_metrics import get_metric
 
-class PostProcessorOperationFilter(PostProcessorBase):
+class PostProcessorEtypeFilter(PostProcessorBase):
     '''For GLEU, remove insetion edits and keep deletion and replacement edits.
     '''
+
+    @dataclass
+    class Config(PostProcessorBase.Config):
+        filter_type: list[str] = field(
+            default_factory=lambda: ['M:']
+        )
     
     def __init__(self, config = None):
         super().__init__(config)
@@ -14,9 +20,14 @@ class PostProcessorOperationFilter(PostProcessorBase):
 
     def filter(self, src, hyp):
         edits = self.errant.extract_edits(src, hyp)
-        filtered_edits = [
-            e for e in edits if not (e.type[:2] == 'M:' and len(e.c_str.split(' ')) == 1)
-        ]
+        filtered_edits = []
+        for e in edits:
+            ok = True
+            for fil in self.config.filter_type:
+                if fil in e.type:
+                    ok = False
+            if ok:
+                filtered_edits.append(e)
         return apply_edits(src, filtered_edits)
     
     def correct(

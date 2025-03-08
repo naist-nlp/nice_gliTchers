@@ -5,12 +5,35 @@ from gec_metrics import get_metric
 class PostProcessorPTERRANTWeight(PostProcessorBase):
     @dataclass
     class Config(PostProcessorBase.Config):
-        threshold: float = 0.0125
+        threshold: float = 0
     
     def __init__(self, config=None) -> None:
         super().__init__(config)
         self.errant = CachedERRANT()
         self.pterrant = get_metric('pterrant')()
+
+    def calc_edit_weights(
+        self,
+        pterrant,
+        src: str,
+        ref: str,
+        edits
+    ) -> list[float]:
+        '''This does not take absolute.
+        '''
+        if edits == []:
+            return []
+        tuple_edits = [(e.o_start, e.o_end, e.c_str) for e in edits]
+        # Remove duplications
+        edits = [edits[i] for i, e in enumerate(tuple_edits) if e not in tuple_edits[:i]]
+        num_edits = len(edits)
+        sents = [pterrant.apply_edits(src, [e]) for e in edits]
+        scores1 = pterrant.weight_model.score_sentence([src], [[ref]]) * num_edits
+        scores2 = pterrant.weight_model.score_sentence(sents, [[ref] * num_edits])
+        weights = [s2 - s1 for s1, s2 in zip(scores1, scores2)]
+        return {
+            (e.o_start, e.o_end, e.c_str): w for e, w in zip(edits, weights)
+        }
     
     def correct(
         self,
@@ -23,8 +46,8 @@ class PostProcessorPTERRANTWeight(PostProcessorBase):
             src = sources[sent_id]
             hyp = hypothesis[sent_id]
             hyp_edits = self.errant.extract_edits(src, hyp)
-            weights = self.pterrant.calc_edit_weights(
-                src, hyp, hyp_edits
+            weights = self.calc_edit_weights(
+                self.pterrant, src, hyp, hyp_edits
             )
             hyp_edits_tuple = [
                 (e.o_start, e.o_end, e.c_str) for e in hyp_edits

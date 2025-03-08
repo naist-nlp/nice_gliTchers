@@ -1,22 +1,14 @@
 from .base import CorrectorBase
-from .add_prefix import CorrectorrAddPrefix
 from .delete_all import CorrectorDeleteAll
-from .delete_random import CorrectorDeleteRandom
 from .keep_all import CorrectorKeepAll
-from .shuffle import CorrectorShuffle
 from .static_response import CorrectorStaticResponse
-from .repreat import CorrectorRepeat
 from .knn_search import CorrectorKnnSearch
 
 
 classes = [
-    CorrectorrAddPrefix,
     CorrectorDeleteAll,
-    CorrectorDeleteRandom,
-    CorrectorShuffle,
     CorrectorKeepAll,
     CorrectorStaticResponse,
-    CorrectorRepeat,
     CorrectorKnnSearch
 ]
 id2class = {

@@ -4,15 +4,15 @@ from nice_glitchers.correctors import CorrectorKnnSearch
 
 class PostProcessorKnnSearch(PostProcessorBase):
     @dataclass
-    class Config(PostProcessorBase.Config): ...
+    class Config(PostProcessorBase.Config):
+        knn_config: "CorrectorKnnSearch.Config" = None
     
     def __init__(self, config=None) -> None:
         super().__init__(config)
-        self.knn_corrector = CorrectorKnnSearch(CorrectorKnnSearch.Config(
-            data_ids=['lang8-train', 'troy-1bw-train', 'troy-blogs-train'],
-            index_dir='exp-datasets/index',
-            k=1024
-        ))
+        self.knn_corrector = CorrectorKnnSearch(self.config.knn_config)
+
+    def save(self, path):
+        self.knn_corrector.save(path)
     
     def correct(
         self,

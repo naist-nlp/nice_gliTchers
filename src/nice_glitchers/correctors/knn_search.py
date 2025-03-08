@@ -10,18 +10,23 @@ import numpy as np
 from pathlib import Path
 import torch
 from tqdm import tqdm
+import json
 
 class CorrectorKnnSearch(CorrectorBase):
     @dataclass
     class Config(CorrectorBase.Config):
         data_ids: list[str] = field(
-            default_factory=lambda: ['lang8-train', 'troy-1bw-train', 'troy-blogs-train']
+            default_factory=lambda: [
+                'lang8-train',
+                'fce-train', 'wi-locness-train', 'nucle-train',
+                'troy-1bw-train', 'troy-blogs-train'
+            ]
         )
         index_dir: str = 'exp-datasets/index'
-        k: int = 1024
+        k: int = 256
 
     def __init__(self, config=None) -> None:
-        self.config = config if config is not None else self.Config()
+        super().__init__(config)
         Path(self.config.index_dir).mkdir(exist_ok=True, parents=True)
         self.impara = get_metric('impara')()
         gec = GECDatasets('exp-datasets')
@@ -35,10 +40,12 @@ class CorrectorKnnSearch(CorrectorBase):
         )
         if torch.cuda.is_available():
             self.encoder.cuda()
-        data_name = '|||'.join(self.config.data_ids)
-        KVSTORE_PATH = Path(self.config.index_dir) / f'{data_name}-kv.bin'
-        INDEX_PATH = Path(self.config.index_dir) / f'{data_name}-index.bin'
-        INDEX_CONFIG_PATH = Path(self.config.index_dir) / f'{data_name}-config.yaml'
+        data_name = 'SEP'.join(self.config.data_ids)
+        self.index_dir = Path(self.config.index_dir) / f'{data_name}'
+        self.index_dir.mkdir(exist_ok=True, parents=True)
+        KVSTORE_PATH = self.index_dir / 'kv.bin'
+        INDEX_PATH = self.index_dir / 'index.bin'
+        INDEX_CONFIG_PATH = self.index_dir / 'config.yaml'
         if INDEX_PATH.exists():
             self.retriver = self.load_index(
                 INDEX_PATH, INDEX_CONFIG_PATH
@@ -48,6 +55,11 @@ class CorrectorKnnSearch(CorrectorBase):
                 self.encoder, self.text,
                 KVSTORE_PATH, INDEX_PATH, INDEX_CONFIG_PATH,
             )
+        self.save_data = []
+
+    def save(self, path):
+        with open(path, 'w') as f:
+            json.dump(self.save_data, f, indent=2)
 
     def build_index(
         self,
@@ -100,6 +112,7 @@ class CorrectorKnnSearch(CorrectorBase):
         hyps = []
         num_srcs = len(sources)
         batch_size = self.impara.config.batch_size
+        search_results = []
         for batch_s in tqdm(range(0, num_srcs, batch_size)):
             batch = sources[batch_s: batch_s + batch_size]
             query_vectors = self.encoder.encode(batch).cpu().numpy()
@@ -126,5 +139,16 @@ class CorrectorKnnSearch(CorrectorBase):
                     key=lambda x: x[1]
                 )[-1][0]
                 hyps.append(best_hyp)
+
+                best_idx = hyp_candidates.index(best_hyp)
+                save_elem = {
+                    'src': batch[example_id],
+                    'hyp': best_hyp,
+                    'distance': float(dis[best_idx]),
+                    'indices': int(idxs[best_idx]),
+                    'threshold-ratio': float(sum(d > 0.9 for d in dis) / len(dis)),
+                    'k': len(dis)
+                }
+                self.save_data.append(save_elem)
         print('end')
         return hyps

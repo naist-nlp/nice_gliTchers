@@ -1,13 +1,13 @@
 from .base import PostProcessorBase
 from .all_edit_patterns import PostProcessorAllEditPatterns
-from .operation_filter import PostProcessorOperationFilter
+from .etype_filter import PostProcessorEtypeFilter
 from .keep_all import PostProcessorKeepAll
 from .remove_pterrant_minus import PostProcessorPTERRANTWeight
 from .knn_search import PostProcessorKnnSearch
 
 classes = [
     PostProcessorAllEditPatterns,
-    PostProcessorOperationFilter,
+    PostProcessorEtypeFilter,
     PostProcessorKeepAll,
     PostProcessorPTERRANTWeight,
     PostProcessorKnnSearch
