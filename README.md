@@ -158,7 +158,7 @@ corrector = _cls(_cls.Config(
 
 # PostProcessors List
 
-### nice_glitchers.correctors.PostProcessorsKeepAll
+### nice_glitchers.postprocessor.PostProcessorsKeepAll
 
 何もしない．訂正文そのものを評価するためのクラス．
 ```python
@@ -167,7 +167,7 @@ _cls = get_postprocessor('keepall')
 corrector = _cls(_cls.Config())
 ```
 
-### nice_glitchers.correctors.PostProcessorAllEditPatterns
+### nice_glitchers.postprocessor.PostProcessorAllEditPatterns
 
 編集の適用パターンを全列挙して，IMPARAの品質推定スコアが最も高いものを出力する．予稿ではIMPARAへの攻撃手法として使用．
 - max_edits: 編集の数の最大値．これを超える編集をもつ訂正文は無視される（訂正文がそのまま出力される）．編集数Nのとき計算量が2^Nのため．
@@ -181,7 +181,7 @@ corrector = _cls(_cls.Config(
 ))
 ```
 
-### nice_glitchers.correctors.PostProcessorEtypeFilter
+### nice_glitchers.postprocessor.PostProcessorEtypeFilter
 
 特定の誤りタイプのみ除外する．予稿ではGLEUの攻撃手法として削除の編集を全て除外するために使用．
 - filter_type: 除外する編集の誤りタイプを指定．ERRANTのEditクラスの.type属性における部分文字列と一致すれば除外する．例えば，挿入のみ除外する場合は'M:*'の誤りタイプを除けばよいので`'M:'`となる．
@@ -193,7 +193,7 @@ corrector = _cls(_cls.Config(
 ))
 ```
 
-### nice_glitchers.correctors.PostProcessorKnnSearch
+### nice_glitchers.postprocessor.PostProcessorKnnSearch
 
 `CorrectorKnnSearch`によって得られた近傍事例中の最適な事例と，さらに訂正文も加えた候補からIMARAの品質推定スコアが最も高いものを出力する．
 - knn_config: `CorrectorKnnSearch`のconfigと同じ．
@@ -210,13 +210,12 @@ corrector = _cls(_cls.Config(
 ))
 ```
 
-### nice_glitchers.correctors.PostProcessorPTERRANTWeight
+### nice_glitchers.postprocessor.PostProcessorPTERRANTWeight
 
 PT-ERRANTの絶対値を取る前の重みの符号に注目し，負の重みが計算された編集のみ除外する．予稿では(PT-)ERRANTへの攻撃手法として使用．
 - threshold: 重みがこれを下回れば負の編集とみなして除外する．0のとき符号と一致する．
 ```python
 from nice_glitchers import get_postprocessor
-from nice_glitchers.correctors import CorrectorKnnSearch
 _cls = get_postprocessor('pterrantweight')
 corrector = _cls(_cls.Config(
     threshold=0.0
